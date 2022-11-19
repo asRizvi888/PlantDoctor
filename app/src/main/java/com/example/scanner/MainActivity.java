@@ -14,8 +14,11 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleOwner;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -90,13 +93,31 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
         processCameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, preview, imageCapture, imageAnalysis);
     }
 
+    // process image frame
     @Override
     public void analyze(@NonNull ImageProxy image) {
-        // process image frame
         // Log.d("main activity", "got the frame at: " + image.getImageInfo().getTimestamp());
-
         // Bitmap
         final Bitmap bitmap = previewView.getBitmap();
+
+        for (int i=0; i<bitmap.getWidth(); ++i) {
+            for (int j=0; j<bitmap.getHeight(); ++j) {
+                // pixel wise color matching
+                int pixel = bitmap.getPixel(i, j);
+
+                int color = Color.rgb(pixel, pixel, pixel);
+
+                // checks for GREEN color in pixel
+
+                if (color == Color.GREEN) {
+                    String url = "https://i.pinimg.com/originals/90/13/f7/9013f7b5eb6db0f41f4fd51d989491e7.gif"; // successful gif
+
+                    Intent intent = new Intent(Intent.ACTION_VIEW); // Browser Intent
+                    intent.setData(Uri.parse(url));
+                    startActivity(intent);
+                }
+            }
+        }
 
         image.close();
     }
