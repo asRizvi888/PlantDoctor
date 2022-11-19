@@ -30,9 +30,9 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private static final int MY_CAMERA_REQUEST_CODE = 100;
 
-    PreviewView previewView;
-    ImageCapture imageCapture;
-    ImageAnalysis imageAnalysis;
+    private PreviewView previewView;
+    private ImageCapture imageCapture;
+    private ImageAnalysis imageAnalysis;
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -40,12 +40,17 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // remove action bar from top
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
+
         // manage permission
         if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.CAMERA}, MY_CAMERA_REQUEST_CODE);
         }
 
-        previewView = findViewById(R.id.preview);
+        previewView = findViewById(R.id.preview); // instance variable for preview
 
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(() -> {

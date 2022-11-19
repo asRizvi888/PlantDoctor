@@ -9,10 +9,11 @@
     tools:context=".MainActivity">
 
     <androidx.camera.view.PreviewView
-        android:layout_width="350dp"
-        android:layout_height="350dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:id="@+id/preview"
         app:scaleType="fillCenter"
+        android:elevation="20dp"
         />
 
 </LinearLayout>
