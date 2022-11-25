@@ -6,14 +6,53 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
+    android:background="@drawable/bg"
     tools:context=".MainActivity">
 
     <androidx.camera.view.PreviewView
-        android:layout_width="240dp"
-        android:layout_height="240dp"
+        android:layout_marginTop="25dp"
+        android:layout_width="375dp"
+        android:layout_height="480dp"
         android:id="@+id/preview"
         app:scaleType="fillCenter"
         android:elevation="20dp"
         />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/roundedcorner"
+        android:layout_marginTop="30dp"
+        android:padding="20dp"
+        android:orientation="vertical"
+        >
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/resultView"
+            android:text="scanning..."
+            android:textColor="@color/black"
+            android:textStyle="bold"
+            android:textSize="28dp"
+            android:layout_marginTop="10dp"
+            />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/confidence"
+            android:text=""
+            android:layout_marginTop="10dp"
+            android:textSize="18dp"
+            />
+
+        <Button
+            android:id="@+id/webBtn"
+            android:layout_width="350dp"
+            android:layout_height="60dp"
+            android:backgroundTint="@color/teal_200"
+            android:layout_gravity="center"
+            android:layout_marginTop="25dp"
+            android:text="See More"
+            android:textSize="16dp" />
+    </LinearLayout>
 </LinearLayout>
