@@ -23,6 +23,7 @@
         android:layout_height="match_parent"
         android:background="@drawable/roundedcorner"
         android:layout_marginTop="30dp"
+        android:gravity="center_vertical"
         android:padding="20dp"
         android:orientation="vertical"
         >
