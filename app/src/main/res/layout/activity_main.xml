@@ -37,23 +37,39 @@
             android:textSize="28dp"
             android:layout_marginTop="10dp"
             />
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/confidence"
-            android:text=""
-            android:layout_marginTop="10dp"
-            android:textSize="18dp"
-            />
-
-        <Button
-            android:id="@+id/webBtn"
-            android:layout_width="350dp"
-            android:layout_height="60dp"
-            android:backgroundTint="@color/teal_200"
+            android:orientation="horizontal"
             android:layout_gravity="center"
-            android:layout_marginTop="25dp"
-            android:text="See More"
-            android:textSize="16dp" />
+            android:id="@+id/resultLayout"
+            android:paddingVertical="10dp"
+            >
+
+            <TextView
+                android:id="@+id/confidence"
+                android:layout_width="250dp"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:layout_marginTop="15dp"
+                android:textSize="18dp"
+                tools:layout_editor_absoluteX="-1dp"
+                tools:layout_editor_absoluteY="18dp"
+                />
+
+            <Button
+                android:id="@+id/webBtn"
+                android:layout_width="100dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_toRightOf="@+id/confidence"
+                android:backgroundTint="@color/teal_200"
+                android:text="See More"
+                android:textSize="12dp"
+                tools:layout_editor_absoluteX="246dp"
+                tools:layout_editor_absoluteY="0dp"
+                />
+        </LinearLayout>
+
     </LinearLayout>
 </LinearLayout>

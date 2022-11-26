@@ -1,26 +1,37 @@
 package com.example.scanner;
 
+import static androidx.camera.core.ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY;
+
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
+import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleOwner;
 
@@ -31,25 +42,31 @@ import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 
 public class MainActivity extends AppCompatActivity implements ImageAnalysis.Analyzer {
 
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
-    private static final int MY_CAMERA_REQUEST_CODE = 100;
+    private static final int MY_REQUEST_CODE = 100;
 
     private PreviewView previewView;
-    private Button webButton;
+    private ImageCapture imageCapture;
+    private Button webButton, captureButton;
     private TextView textView, confidenceView;
+
+    private LinearLayout linearLayout;
+
     private final int imageSize = 224;
     int maxPos = 0;
     float maxConfidence = 0;
-
+    File path = new File("/storage/emulated/0/Pictures/plat-doctor.jpg");
 
     private ImageAnalysis imageAnalysis;
 
@@ -67,16 +84,26 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
         }
 
         // manage permission
+
         if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.CAMERA}, MY_CAMERA_REQUEST_CODE);
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, MY_REQUEST_CODE);
+        }
+
+        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_REQUEST_CODE);
+        }
+
+        if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, MY_REQUEST_CODE);
         }
 
         previewView = findViewById(R.id.preview); // instance variable for preview
         webButton = findViewById(R.id.webBtn);
         confidenceView = findViewById(R.id.confidence);
         textView = findViewById(R.id.resultView);
+        linearLayout = findViewById(R.id.resultLayout);
 
-        webButton.setVisibility(View.INVISIBLE);
+        linearLayout.setVisibility(View.INVISIBLE);
 
         webButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -91,17 +118,68 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
             }
         });
 
+        /*
+        captureButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //TODO: capture current frame & pass to analyzer to validate classifier model
+                @SuppressLint("SdCardPath")
+
+                long timestamp = System.currentTimeMillis();
+                ContentValues contentValues = new ContentValues();
+
+                contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, "plant-doctor");
+                contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg");
+
+                        imageCapture.takePicture(
+                                new ImageCapture.OutputFileOptions.Builder(
+                                        getContentResolver(),
+                                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                        contentValues
+                                ).build(),
+                                getExecutor(),
+                                new ImageCapture.OnImageSavedCallback() {
+                                    @Override
+                                    public void onImageSaved(ImageCapture.OutputFileResults outputFileResults) {
+                                        // insert your code here.
+                                        Bitmap temp = BitmapFactory.decodeFile(path.getAbsolutePath());
+                                        Bitmap bitmap = Bitmap.createScaledBitmap(
+                                                //MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.fromFile(path)),
+                                                temp, imageSize, imageSize, false
+                                        );
+
+                                        classifyImage(bitmap);
+
+                                        // delete image
+                                        path.delete();
+
+                                    }
+                                    @Override
+                                    public void onError(ImageCaptureException error) {
+                                        // insert your code here.
+                                        error.printStackTrace();
+                                        Toast.makeText(MainActivity.this, "Failed to scan", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                        );
+
+                textView.setText(labels.get(maxPos));
+                captureButton.setVisibility(View.INVISIBLE);
+                linearLayout.setVisibility(View.VISIBLE);
+            }
+        });
+
+         */
+
         // get labels from file
         try {
             AssetManager assetManager = getApplicationContext().getAssets();
             BufferedReader bufferedReader = new BufferedReader(
                     new InputStreamReader(assetManager.open("labels.txt"))
             );
-            //int size = is.available();
 
             while(true) {
                 String label = bufferedReader.readLine();
-
                 if (label != null) {
                     labels.add(label);
                 } else {
@@ -111,12 +189,6 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
 
         } catch (IOException e) {
             e.printStackTrace();
-        }
-
-        if (!labels.isEmpty()) {
-            for(String str: labels) {
-                System.out.println(str);
-            }
         }
 
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
@@ -130,6 +202,11 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
         }, ContextCompat.getMainExecutor(this));
     }
 
+    @NonNull
+    private Executor getExecutor () {
+        return ContextCompat.getMainExecutor(this);
+    }
+
     private void startCamera(@NonNull ProcessCameraProvider processCameraProvider) {
         processCameraProvider.unbindAll();
 
@@ -140,6 +217,11 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
         // Preview
         Preview preview = new Preview.Builder().build();
         preview.setSurfaceProvider(previewView.getSurfaceProvider());
+
+        // Capture Image
+         imageCapture = new ImageCapture.Builder()
+                 .setCaptureMode(CAPTURE_MODE_MINIMIZE_LATENCY)
+                 .build();
 
         // Image Analysis
         imageAnalysis = new ImageAnalysis.Builder()
@@ -193,9 +275,9 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
                 }
             }
 
+            confidenceView.setText(String.format("Confidence: %.2f%%", maxConfidence * 100));
             textView.setText(labels.get(maxPos));
-            webButton.setVisibility(View.VISIBLE);
-            confidenceView.setText(String.format("Confidence: %s%%", maxConfidence * 100));
+            linearLayout.setVisibility(View.VISIBLE);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -210,6 +292,7 @@ public class MainActivity extends AppCompatActivity implements ImageAnalysis.Ana
         bmp = Bitmap.createScaledBitmap(bmp, imageSize, imageSize, false);
         classifyImage(bmp);
 
-        imageAnalysis.clearAnalyzer();
+        image.close();
+        //imageAnalysis.clearAnalyzer();
     }
 }
